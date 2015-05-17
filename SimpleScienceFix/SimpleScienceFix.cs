@@ -10,29 +10,31 @@ namespace SimpleScienceFix
     {
         private void Update()
         {
-            if (FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleScienceExperiment>() != null)
+            var experiments = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleScienceExperiment>();
+            if (!experiments.Any())
+                return;
+
+            string[] selectedNames = {"crewReport", "surfaceSample", "evaReport"};
+            var selectedExperiments = 
+                      from exp in experiments
+                      where selectedNames.Contains(exp.experimentID)
+                      where (exp.part.FindModuleImplementing<ModuleScienceContainer>() != null)
+                      where (exp.GetData().Any())
+                      select exp;
+            if (!selectedExperiments.Any())
+                return;
+
+            foreach (var exp in selectedExperiments)
             {
-                foreach (ModuleScienceExperiment exp in FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleScienceExperiment>())
-                {
-                    if (exp.experimentID == "crewReport" | exp.experimentID == "surfaceSample" | exp.experimentID == "evaReport")
-                    {
-                        if (exp.part.FindModuleImplementing<ModuleScienceContainer>() != null)
-                        {
-                            if (exp.GetData() != null)
-                            {
-                                foreach (ScienceData data in exp.GetData())
-                                {
-                                    List<ModuleScienceExperiment> explist = new List<ModuleScienceExperiment>();
-                                    explist.Add(exp);
-                                    if (exp.part.FindModuleImplementing<ModuleScienceContainer>().HasData(data) == false)
-                                        exp.part.FindModuleImplementing<ModuleScienceContainer>().StoreData(explist.Cast<IScienceDataContainer>().ToList(), true);
-                                    explist.Clear();
-                                    exp.ResetExperiment();
-                                } 
-                            }
-                        }
-                    }
-                }
+                var container = exp.part.FindModuleImplementing<ModuleScienceContainer>();
+
+                // String log = string.Concat("Storing ", exp.experimentID, " from ", exp.part.partInfo.title, " in ", container.part.partInfo.title, "\n");
+                // ScreenMessages.PostScreenMessage(log, 10f, ScreenMessageStyle.UPPER_LEFT);
+
+                if (exp.GetData().All(data => container.HasData(data)))
+                    continue;
+                container.StoreData(new List<IScienceDataContainer> { exp }, true);
+                exp.ResetExperiment();
             }
         }
 
