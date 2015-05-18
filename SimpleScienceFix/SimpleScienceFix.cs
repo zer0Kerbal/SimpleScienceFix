@@ -8,14 +8,13 @@ namespace SimpleScienceFix
     [KSPAddon(KSPAddon.Startup.Flight, false)]
     public class SimpleScienceFix : MonoBehaviour
     {
-        private void Update()
-        {
+        private void Update() {
             var experiments = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleScienceExperiment>();
             if (!experiments.Any())
                 return;
 
-            string[] selectedNames = {"crewReport", "surfaceSample", "evaReport"};
-            var selectedExperiments = 
+            string[] selectedNames = { "crewReport", "surfaceSample", "evaReport" };
+            var selectedExperiments =
                       from exp in experiments
                       where selectedNames.Contains(exp.experimentID)
                       where (exp.part.FindModuleImplementing<ModuleScienceContainer>() != null)
@@ -24,8 +23,7 @@ namespace SimpleScienceFix
             if (!selectedExperiments.Any())
                 return;
 
-            foreach (var exp in selectedExperiments)
-            {
+            foreach (var exp in selectedExperiments) {
                 var container = exp.part.FindModuleImplementing<ModuleScienceContainer>();
 
                 // String log = string.Concat("Storing ", exp.experimentID, " from ", exp.part.partInfo.title, " in ", container.part.partInfo.title, "\n");
@@ -37,6 +35,5 @@ namespace SimpleScienceFix
                 exp.ResetExperiment();
             }
         }
-
     }
 }
