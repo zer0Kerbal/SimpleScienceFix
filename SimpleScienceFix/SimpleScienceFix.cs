@@ -14,25 +14,21 @@ namespace SimpleScienceFix
                 return;
 
             string[] selectedNames = { "crewReport", "surfaceSample", "evaReport" };
-            var selectedExperiments =
-                      from exp in experiments
-                      where selectedNames.Contains(exp.experimentID)
-                      where (exp.part.FindModuleImplementing<ModuleScienceContainer>() != null)
-                      where (exp.GetData().Any())
-                      select exp;
-            if (!selectedExperiments.Any())
+            var selection =
+                      from experiment in experiments
+                      where (experiment.GetScienceCount() > 0)
+                      where selectedNames.Contains(experiment.experimentID)
+                      let storage = experiment.part.FindModuleImplementing<ModuleScienceContainer>()
+                      where storage != null
+                      select new { experiment, storage };
+            if (!selection.Any())
                 return;
 
-            foreach (var exp in selectedExperiments) {
-                var container = exp.part.FindModuleImplementing<ModuleScienceContainer>();
-
-                // String log = string.Concat("Storing ", exp.experimentID, " from ", exp.part.partInfo.title, " in ", container.part.partInfo.title, "\n");
-                // ScreenMessages.PostScreenMessage(log, 10f, ScreenMessageStyle.UPPER_LEFT);
-
-                if (exp.GetData().All(data => container.HasData(data)))
+            foreach (var s in selection) {
+                if (s.experiment.GetData().All(data => s.storage.HasData(data)))
                     continue;
-                container.StoreData(new List<IScienceDataContainer> { exp }, true);
-                exp.ResetExperiment();
+                s.storage.StoreData(new List<IScienceDataContainer> { s.experiment }, true);
+                s.experiment.ResetExperiment();
             }
         }
     }
